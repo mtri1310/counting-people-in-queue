@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import pandas as pd
 import torch
 import pathlib
 import cvzone
@@ -13,6 +12,7 @@ pathlib.PosixPath = pathlib.WindowsPath
 model_path = "best.pt"  # Đường dẫn tới mô hình YOLOv5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Sử dụng GPU nếu có
 model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path, device=device)
+print(f"Using device: {device}")
 
 # Biến toàn cục lưu tọa độ chuột
 cursor_pos = (0, 0)
@@ -25,11 +25,12 @@ def mouse_move(event, x, y, flags, param):
 
 # Hàm phát hiện và đếm người
 def detect_and_count_human(frame, polygon_coords):
-    # Chuyển khung hình sang định dạng PyTorch
     results = model(frame)
     detections = results.xyxy[0].cpu().numpy()  # Lấy kết quả phát hiện
 
     human_count = 0
+    confidences = []  # Danh sách lưu trữ các giá trị confidence
+
     for detection in detections:
         x1, y1, x2, y2, conf, class_id = detection
         class_id = int(class_id)
@@ -43,22 +44,38 @@ def detect_and_count_human(frame, polygon_coords):
             if cv2.pointPolygonTest(polygon_coords, (center_x, center_y), False) >= 0:
                 human_count += 1
 
+            # Lưu lại giá trị confidence
+            confidences.append(conf)
+
             # Vẽ bounding box và nhãn
             cvzone.cornerRect(frame, (int(x1), int(y1), int(x2 - x1), int(y2 - y1)), l=20, t=2, colorR=(0, 255, 0))
             cv2.putText(frame, f"Person {conf:.2f}", (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         (0, 255, 0), 2)
 
+    # In ra độ chính xác cao nhất và dao động
+    if confidences:
+        max_conf = max(confidences)
+        min_conf = min(confidences)
+        print(f"Max confidence: {max_conf:.2f}")
+        print(f"Confidence range: {min_conf:.2f} to {max_conf:.2f}")
+    else:
+        print("No persons detected.")
+
     return frame, human_count
 
 # Khởi tạo video capture
-cap = cv2.VideoCapture("queue.mp4")  # Đường dẫn tới video
+cap = cv2.VideoCapture("queue2.mp4")  # Đường dẫn tới video
 
 # Tọa độ hình bình hành (có thể chỉnh sửa trực tiếp trong khi chạy)
-parallelogram_coords = np.array([[70, 50], [150, 25], [300, 200], [180, 250]])
+parallelogram_coords = np.array([[300, 130], [480, 110], [480, 250], [300, 250]])
 
 # Gắn sự kiện chuột
 cv2.namedWindow("Video Frame")
 cv2.setMouseCallback("Video Frame", mouse_move)
+
+# Tạo đối tượng VideoWriter để lưu video dưới định dạng MP4 (Sử dụng codec H.264)
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec MP4
+output_video = cv2.VideoWriter('output_video.mp4', fourcc, 30, (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
 
 while True:
     ret, frame = cap.read()
@@ -82,17 +99,17 @@ while True:
 
     # Hiển thị tọa độ chuột
     cv2.putText(frame, f"Mouse Position: {cursor_pos}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-    cv2.circle(frame, cursor_pos, 5, (255, 0, 0), -1)  # Đánh dấu vị trí chuột
 
-    # Hiển thị số lượng người đếm được
-    cv2.putText(frame, f"Count: {human_count}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-
-    # Hiển thị khung hình
+    # Hiển thị video
     cv2.imshow("Video Frame", frame)
+
+    # Lưu video
+    output_video.write(frame)
 
     # Thoát khi nhấn phím 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cap.release()
+output_video.release()
 cv2.destroyAllWindows()
