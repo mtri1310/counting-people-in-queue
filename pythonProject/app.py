@@ -51,16 +51,6 @@ def detect_and_count_human(frame, polygon_coords):
             cvzone.cornerRect(frame, (int(x1), int(y1), int(x2 - x1), int(y2 - y1)), l=20, t=2, colorR=(0, 255, 0))
             cv2.putText(frame, f"Person {conf:.2f}", (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         (0, 255, 0), 2)
-
-    # In ra độ chính xác cao nhất và dao động
-    if confidences:
-        max_conf = max(confidences)
-        min_conf = min(confidences)
-        print(f"Max confidence: {max_conf:.2f}")
-        print(f"Confidence range: {min_conf:.2f} to {max_conf:.2f}")
-    else:
-        print("No persons detected.")
-
     return frame, human_count
 
 # Khởi tạo video capture
