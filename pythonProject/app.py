@@ -63,7 +63,7 @@ parallelogram_coords = np.array([[300, 130], [480, 110], [480, 250], [300, 250]]
 cv2.namedWindow("Video Frame")
 cv2.setMouseCallback("Video Frame", mouse_move)
 
-# Tạo đối tượng VideoWriter để lưu video dưới định dạng MP4 (Sử dụng codec H.264)
+# Tạo đối tượng VideoWriter để lưu video dưới định dạng MP4 (Sử dụng codec mp4v)
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec MP4
 output_video = cv2.VideoWriter('output_video.mp4', fourcc, 30, (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
 
@@ -89,6 +89,9 @@ while True:
 
     # Hiển thị tọa độ chuột
     cv2.putText(frame, f"Mouse Position: {cursor_pos}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+
+    # Hiển thị số lượng người đếm được
+    cv2.putText(frame, f"Count: {human_count}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
     # Hiển thị video
     cv2.imshow("Video Frame", frame)
