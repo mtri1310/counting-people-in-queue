@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['person']
+
+roboflow:
+  workspace: mt-e7r6v
+  project: human-detection-brmsz
+  version: 1
+  license: Private
+  url: https://app.roboflow.com/mt-e7r6v/human-detection-brmsz/1
